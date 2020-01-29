@@ -9,6 +9,9 @@ const BOT_TOKEN = process.env.TELEGRAM_TOKEN;
 const URL = process.env.APP_URL;
 const PORT = process.env.PORT || 2000;
 
+bot.telegram.setWebhook(`${URL}bot${TELEGRAM_TOKEN}`);
+bot.startWebhook(`/bot${BOT_TOKEN}`, null, PORT);
+
 const askForReminder = ctx =>{
     ctx.reply("O que vc quer que eu te lembre?");
     return ctx.wizard.next();
@@ -101,7 +104,4 @@ stage.register(criarLembrete)
 const bot = new Telegraf(BOT_TOKEN)
 bot.use(session())
 bot.use(stage.middleware())
-bot.command('melembre', (ctx) => ctx.scene.enter('me_lembre'))
-
-bot.telegram.setWebhook(`${URL}bot${TELEGRAM_TOKEN}`);
-bot.startWebhook(`/bot${BOT_TOKEN}`, null, PORT);
+bot.command('melembre', (ctx) => ctx.scene.enter('me_lembre'));
