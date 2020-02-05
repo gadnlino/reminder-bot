@@ -34,8 +34,15 @@ const askForReminder = ctx=>{
 }
 
 const askForDate = ctx =>{
+
+  const today = new Date();
+	const minDate = new Date();
+	minDate.setMonth(today.getMonth() - 2);
+	const maxDate = new Date();
+  maxDate.setMonth(today.getMonth() + 12);
+  
   ctx.reply("Em qual data voce quer que eu te lembre?",
-            calendar.getCalendar())
+            calendar.setMinDate(minDate).setMaxDate(maxDate).getCalendar())
   
   return ctx.scene.next();
 }
