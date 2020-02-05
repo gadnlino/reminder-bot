@@ -30,11 +30,11 @@ const calendar = new Calendar(bot, {
 calendar.setDateListener((context, date) => {
 
   Lembrete["data"] = date;
-  
-  console.log(context);
-  console.log(Lembrete);
 
-  context.scene.enter("finalizar_conversa");
+  // console.log(context);
+  // console.log(Lembrete);
+
+  // context.scene.enter("finalizar_conversa");
 });
 
 const askForReminder = ctx => {
@@ -67,7 +67,8 @@ const finishConversation = ctx =>{
 const criarLembrete = new WizardScene(
     "me_lembre",
     askForReminder,
-    askForDate
+    askForDate,
+    finishConversation
 );  
 
 const finalizarConversa = new WizardScene(
