@@ -29,7 +29,11 @@ const calendar = new Calendar(bot, {
 
 calendar.setDateListener((context, date) => {
 
-  Lembrete["data"] = ctx.message.date;
+  Lembrete["data"] = date;
+  
+  console.log(context);
+  console.log(Lembrete);
+
   context.scene.enter("finalizar_conversa");
 });
 
