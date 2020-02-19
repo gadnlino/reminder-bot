@@ -59,7 +59,7 @@ const askForDate = ctx =>{
             .setMaxDate(maxDate)
             .getCalendar())
   
-  return ctx.scene.next();
+  return ctx.wizard.next();
 }
 
 const finishConversation = ctx =>{
