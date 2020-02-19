@@ -27,15 +27,16 @@ const calendar = new Calendar(bot, {
 	]
 });
 
-calendar.setDateListener((context, date) => {
+calendar.setDateListener((ctx, date) => {
 
   lembrete["data"] = date;
   console.log(lembrete);
 
   if(lembrete["data"] && lembrete["assunto"]){
 
+    // Enviar o lembrete para a fila de persistencia
+    ctx.reply("Lembrete criado");
   }
-
 });
 
 const askForReminder = ctx => {
