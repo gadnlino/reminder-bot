@@ -30,11 +30,12 @@ const calendar = new Calendar(bot, {
 calendar.setDateListener((context, date) => {
 
   lembrete["data"] = date;
-
+  console.log(lembrete);
+  console.log(context);
   // console.log(context);
   // console.log(lembrete);
 
-  context.scene.enter("finalizar_conversa");
+  //context.scene.enter("finalizar_conversa");
 });
 
 const askForReminder = ctx => {
