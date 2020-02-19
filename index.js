@@ -48,6 +48,7 @@ const askForReminder = ctx => {
 const askForExtras = ctx =>{
   lembrete["assunto"] = ctx.message.text;
 
+    //Colocar inline keyboard para a peessoa decidir se quer alguma observacao adicional ou nao
   ctx.reply("Alguma observacao adicional?");
 
   return ctx.wizard.next();
