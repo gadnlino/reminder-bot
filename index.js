@@ -16,7 +16,7 @@ const bot = new Telegraf(TELEGRAM_TOKEN);
 bot.telegram.setWebhook(`${URL}bot${TELEGRAM_TOKEN}`);
 bot.startWebhook(`/bot${TELEGRAM_TOKEN}`, null, PORT);
 
-const Lembrete = {};
+const lembrete = {};
 
 const calendar = new Calendar(bot, {
 	startWeekDay: 0,
@@ -29,12 +29,12 @@ const calendar = new Calendar(bot, {
 
 calendar.setDateListener((context, date) => {
 
-  Lembrete["data"] = date;
+  lembrete["data"] = date;
 
   // console.log(context);
-  // console.log(Lembrete);
+  // console.log(lembrete);
 
-  // context.scene.enter("finalizar_conversa");
+  context.scene.enter("finalizar_conversa");
 });
 
 const askForReminder = ctx => {
@@ -45,7 +45,7 @@ const askForReminder = ctx => {
 
 const askForDate = ctx =>{
 
-  Lembrete["assunto"] = ctx.message.text;
+  lembrete["assunto"] = ctx.message.text;
 
   const today = new Date();
 	const minDate = new Date();
@@ -54,17 +54,20 @@ const askForDate = ctx =>{
   maxDate.setMonth(today.getMonth() + 12);
   
   ctx.reply("Em qual data voce quer que eu te lembre?",
-            calendar.setMinDate(minDate).setMaxDate(maxDate).getCalendar())
+            calendar
+            .setMinDate(minDate)
+            .setMaxDate(maxDate)
+            .getCalendar())
   
   return ctx.scene.next();
 }
 
 const finishConversation = ctx =>{
-  ctx.reply("Lembrete criado.");
+  ctx.reply("lembrete criado.");
   return ctx.scene.leave();
 };
 
-const criarLembrete = new WizardScene(
+const criarlembrete = new WizardScene(
     "me_lembre",
     askForReminder,
     askForDate,
@@ -143,7 +146,7 @@ const finalizarConversa = new WizardScene(
 
 // Create scene manager
 const stage = new Stage()
-stage.register(criarLembrete)
+stage.register(criarlembrete)
 stage.register(finalizarConversa);
 
 //stage.command('cancel', leave())
