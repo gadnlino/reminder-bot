@@ -2,14 +2,15 @@
   "name": "reminder_bot_node",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/bot/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node src/bot/index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.656.0",
     "telegraf": "^3.36.0",
     "telegraf-calendar-telegram": "^1.5.7"
   }
