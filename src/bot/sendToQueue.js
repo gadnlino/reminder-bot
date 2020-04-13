@@ -1,7 +1,5 @@
 const AWS = require("aws-sdk");
 const sqs = new AWS.SQS({region: "us-east-1"});
-const credentials = new AWS.SharedIniFileCredentials();
-AWS.config.credentials = credentials;
 
 module.exports = (lembrete) => {
 
