@@ -107,6 +107,4 @@ dist/
 # Temporary folders
 tmp/
 temp/
-
-src/lambdas/
 # End of https://www.gitignore.io/api/node
