@@ -1,16 +1,16 @@
-const Telegraf = require('telegraf')
-const session = require('telegraf/session')
-const Stage = require('telegraf/stage')
+const Telegraf = require('telegraf');
+const session = require('telegraf/session');
+const Stage = require('telegraf/stage');
 const { leave } = Stage;
-const Scene = require('telegraf/scenes/base')
 const WizardScene = require("telegraf/scenes/wizard");
 const Calendar = require("telegraf-calendar-telegram");
 const Extra = require('telegraf/extra');
 const sendToAWSQueue = require("./sendToQueue.js");
+//const Scene = require('telegraf/scenes/base');
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const URL = process.env.APP_URL;
-const PORT = process.env.PORT || 2000;
+const PORT = process.env.PORT;
 const hookPath = `${URL}bot${TELEGRAM_TOKEN}`;
 const runningLocally = process.env.RUNNING_LOCALLY.toLowerCase() === "true";
 
