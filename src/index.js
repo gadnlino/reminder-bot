@@ -16,6 +16,8 @@ const PORT = process.env.PORT;
 const hookPath = `${URL}bot${TELEGRAM_TOKEN}`;
 const runningLocally = process.env.RUNNING_LOCALLY.toLowerCase() === "true";
 const remindersTableName = process.env.REMINDERS_BOT_TABLE;
+const remindersLambdaName = process.env.REMINDERS_LAMBDA_NAME;
+const remindersLambdaArn = process.env.REMINDERS_LAMBDA_ARN;
 
 const bot = new Telegraf(TELEGRAM_TOKEN);
 
@@ -90,19 +92,31 @@ calendar.setDateListener(async (ctx, date) => {
   if (lembrete["data"] && lembrete["assunto"]) {
     const { data, assunto, username, from_id, chat_id } = lembrete;
 
-    const response = await awsService.dynamodb.putItem(remindersTableName, {
+    const now = new Date();
+
+    const id = uuid.v1();
+    const reminder_date = new Date(data);
+    reminder_date.setSeconds(now.getSeconds());
+    reminder_date.setMinutes(now.getMinutes());
+    reminder_date.setHours(now.getHours());
+
+    const reminder = {
       body: assunto,
-      creation_date: new Date().toISOString(),
-      reminder_date: new Date(data).toISOString(),
+      creation_date: now.toISOString(),
+      reminder_date: reminder_date.toISOString(),
       dismissed: false,
-      uuid: uuid.v1(),
+      uuid: id,
       username,
       from_id,
       chat_id
-    });
+    };
 
-    if (response.$response.httpResponse.statusCode === 200) {
+    try {
+      await saveReminder(reminder);
       ctx.reply("Lembrete criado");
+    }
+    catch (e) {
+      throw e;
     }
   }
 });
@@ -149,6 +163,42 @@ bot.on('callback_query', async ctx => {
     ctx.reply("Lembrete apagado");
   }
 });
+
+const saveReminder = async (reminder) => {
+  const putItemResp = await awsService.dynamodb
+    .putItem(remindersTableName, reminder);
+
+  const date = new Date(reminder.reminder_date);
+  const ss = date.getUTCSeconds();
+  const mm = date.getUTCMinutes();
+  const hh = date.getUTCHours();
+  const dd = date.getUTCDate();
+  const MM = date.getUTCMonth();
+  const yyyy = date.getUTCFullYear();
+
+  const ruleName = `rule_reminder_${reminder.uuid}`;
+  const scheduleExpression = `cron(${mm} ${hh} ${dd + 1} ${MM + 1} ? ${yyyy})`;
+  const ruleState = "ENABLED";
+
+  const putRuleResp = await awsService.cloudWatchEvents
+                      .putRule(ruleName, scheduleExpression, ruleState);
+
+  const action = "lambda:InvokeFunction";
+  const functionName = remindersLambdaName;
+  const principal = "events.amazonaws.com";
+  const sourceArn = putRuleResp.RuleArn;
+  const statementId = `reminder_statement_${reminder.uuid}`;
+
+  const addPermissionResp = await awsService.lambda
+                          .addPermission(action,functionName,principal,sourceArn,statementId);
+  const targets = [{
+    Arn : remindersLambdaArn,
+    Id : `reminder_target_${reminder.uuid}`,
+    Input : `{"uuid" : "${reminder.uuid}"}`
+  }];
+  
+  const putTargetResp = await awsService.cloudWatchEvents.putTargets(ruleName, targets);  
+};
 
 const pollReminders = async () => {
 

@@ -1,6 +1,10 @@
+const region = "us-east-1";
+
 const AWS = require("aws-sdk");
-const sqs = new AWS.SQS({ region: "us-east-1" });
-const docClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
+const sqs = new AWS.SQS({ region });
+const docClient = new AWS.DynamoDB.DocumentClient({ region });
+const cwevents = new AWS.CloudWatchEvents({ region });
+const lambda = new AWS.Lambda({ region });
 
 module.exports = {
     sqs: {
@@ -70,6 +74,47 @@ module.exports = {
             };
 
             const req = docClient.update(params);
+
+            return req.promise();
+        }
+    },
+    cloudWatchEvents: {
+        putRule: async (Name, ScheduleExpression, State) => {
+
+            const params = {
+                Name,
+                ScheduleExpression,
+                State
+            };
+
+            const req = cwevents.putRule(params);
+
+            return req.promise();
+        },
+        putTargets : async (Rule, Targets)=>{
+
+            const params = {
+                Rule,
+                Targets
+            };
+
+            const req = cwevents.putTargets(params);
+
+            return req.promise();
+        }
+    },
+    lambda: {
+        addPermission: async (Action, FunctionName, Principal, SourceArn, StatementId) => {
+
+            var params = {
+                Action,
+                FunctionName,
+                Principal,
+                SourceArn,
+                StatementId
+            };
+
+            const req = lambda.addPermission(params);
 
             return req.promise();
         }
