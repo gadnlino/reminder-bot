@@ -16,8 +16,7 @@ const PORT = process.env.PORT;
 const hookPath = `${URL}bot${TELEGRAM_TOKEN}`;
 const runningLocally = process.env.RUNNING_LOCALLY.toLowerCase() === "true";
 const remindersTableName = process.env.REMINDERS_BOT_TABLE;
-const remindersLambdaName = process.env.REMINDERS_LAMBDA_NAME;
-const remindersLambdaArn = process.env.REMINDERS_LAMBDA_ARN;
+const persistenceQueueUrl = process.env.PERSISTENCE_QUEUE_URL;
 
 const bot = new Telegraf(TELEGRAM_TOKEN);
 
@@ -111,8 +110,10 @@ calendar.setDateListener(async (ctx, date) => {
       chat_id
     };
 
+    const reminderStr = JSON.stringify(reminder);
+
     try {
-      await saveReminder(reminder);
+      const resp = await awsService.sqs.sendMessage(persistenceQueueUrl, reminderStr);      
       ctx.reply("Lembrete criado");
     }
     catch (e) {
@@ -148,84 +149,48 @@ bot.use(session())
 bot.use(stage.middleware())
 bot.command('melembre', ctx => ctx.scene.enter('me_lembre'));
 
-bot.on('callback_query', async ctx => {
-  const uuid = ctx.update.callback_query.data;
+// bot.on('callback_query', async ctx => {
+//   const uuid = ctx.update.callback_query.data;
 
-  const response = await awsService.dynamodb.updateItem(remindersTableName, {
-    "uuid": uuid
-  },
-    "set dismissed= :d",
-    {
-      ":d": true
-    });
+//   const response = await awsService.dynamodb.updateItem(remindersTableName, {
+//     "uuid": uuid
+//   },
+//     "set dismissed= :d",
+//     {
+//       ":d": true
+//     });
 
-  if (response.$response.httpResponse.statusCode === 200) {
-    ctx.reply("Lembrete apagado");
-  }
-});
+//   if (response.$response.httpResponse.statusCode === 200) {
+//     ctx.reply("Lembrete apagado");
+//   }
+// });
 
-const saveReminder = async (reminder) => {
-  const putItemResp = await awsService.dynamodb
-    .putItem(remindersTableName, reminder);
+// const pollReminders = async () => {
 
-  const date = new Date(reminder.reminder_date);
-  const ss = date.getUTCSeconds();
-  const mm = date.getUTCMinutes();
-  const hh = date.getUTCHours();
-  const dd = date.getUTCDate();
-  const MM = date.getUTCMonth();
-  const yyyy = date.getUTCFullYear();
+//   try {
+//     const date = `${new Date().toISOString().split("T")[0]}T00:00:00.000Z`;
 
-  const ruleName = `rule_reminder_${reminder.uuid}`;
-  const scheduleExpression = `cron(${mm} ${hh} ${dd + 1} ${MM + 1} ? ${yyyy})`;
-  const ruleState = "ENABLED";
+//     const response = await
+//       awsService.dynamodb.queryItems(remindersTableName, "#yr = :date and #flag = :done", {
+//         "#yr": "reminder_date",
+//         "#flag": "dismissed"
+//       }, {
+//         ":date": date,
+//         ":done": false
+//       });
 
-  const putRuleResp = await awsService.cloudWatchEvents
-                      .putRule(ruleName, scheduleExpression, ruleState);
+//     response.Items.forEach(reminder => {
 
-  const action = "lambda:InvokeFunction";
-  const functionName = remindersLambdaName;
-  const principal = "events.amazonaws.com";
-  const sourceArn = putRuleResp.RuleArn;
-  const statementId = `reminder_statement_${reminder.uuid}`;
+//       bot.telegram
+//         .sendMessage(reminder.chat_id, `Lembrete : ${reminder.body}`,
+//           Extra.markup(Markup.inlineKeyboard([
+//             Markup.callbackButton('Já lembrei!', reminder.uuid)
+//           ])));
+//     });
+//   }
+//   catch (e) {
+//     console.log(e);
+//   }
+// }
 
-  const addPermissionResp = await awsService.lambda
-                          .addPermission(action,functionName,principal,sourceArn,statementId);
-  const targets = [{
-    Arn : remindersLambdaArn,
-    Id : `reminder_target_${reminder.uuid}`,
-    Input : `{"uuid" : "${reminder.uuid}"}`
-  }];
-  
-  const putTargetResp = await awsService.cloudWatchEvents.putTargets(ruleName, targets);  
-};
-
-const pollReminders = async () => {
-
-  try {
-    const date = `${new Date().toISOString().split("T")[0]}T00:00:00.000Z`;
-
-    const response = await
-      awsService.dynamodb.queryItems(remindersTableName, "#yr = :date and #flag = :done", {
-        "#yr": "reminder_date",
-        "#flag": "dismissed"
-      }, {
-        ":date": date,
-        ":done": false
-      });
-
-    response.Items.forEach(reminder => {
-
-      bot.telegram
-        .sendMessage(reminder.chat_id, `Lembrete : ${reminder.body}`,
-          Extra.markup(Markup.inlineKeyboard([
-            Markup.callbackButton('Já lembrei!', reminder.uuid)
-          ])));
-    });
-  }
-  catch (e) {
-    console.log(e);
-  }
-}
-
-setInterval(pollReminders, parseInt(process.env.POLL_INTERVAL)); //5min
+// setInterval(pollReminders, parseInt(process.env.POLL_INTERVAL)); //5min
