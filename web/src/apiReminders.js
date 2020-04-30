@@ -13,7 +13,7 @@ function handleError(res, reason, message, code) {
 
 module.exports = () => {
 
-    var server = app.listen(process.env.PORT, function () {
+    var server = app.listen(process.env.API_PORT, function () {
         var port = server.address().port;
         console.log("App now running on port", port);
     });
@@ -26,7 +26,7 @@ module.exports = () => {
         else {
             const reminder = req.body;
             console.log(reminder);
-            
+
             res.sendStatus(200);
         }
     });
