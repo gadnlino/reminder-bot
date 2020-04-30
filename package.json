@@ -5,14 +5,16 @@
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "web" : "node web/src/index.js",
-    "worker" : "node worker/src/index.js",
+    "web": "node web/src/index.js",
+    "worker": "node worker/src/index.js",
     "start": "node web/src/index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.656.0",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
     "telegraf": "^3.36.0",
     "telegraf-calendar-telegram": "^1.5.7"
   },
