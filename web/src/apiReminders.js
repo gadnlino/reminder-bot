@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const https = require('https');
-const helper = require("./helper.js");
+const helper = require("./botHelper.js");
 
 const app = express();
 app.use(bodyParser.json());
