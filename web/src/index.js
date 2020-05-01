@@ -1,5 +1,5 @@
 const bot = require("./bot.js");
-const apiReminders = require("./apiReminders.js");
+const reminderPoller = require("./reminderPoller.js");
 
 bot();
-apiReminders();
+reminderPoller();

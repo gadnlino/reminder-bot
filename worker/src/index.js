@@ -1,4 +1,4 @@
-const awsSvc = require("./services/awsService.js");
+/*const awsSvc = require("./services/awsService.js");
 const botHelper = require("../../web/src/helper.js");
 
 async function pollSqsQueueAndSendReminders(queueUrl) {
@@ -20,4 +20,4 @@ async function pollSqsQueueAndSendReminders(queueUrl) {
 
 const {REMINDERS_QUEUE_URL} = process.env;
 
-setInterval(()=> pollSqsQueueAndSendReminders(REMINDERS_QUEUE_URL), 5000);
+setInterval(()=> pollSqsQueueAndSendReminders(REMINDERS_QUEUE_URL), 5000);*/
