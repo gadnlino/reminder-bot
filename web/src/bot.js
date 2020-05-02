@@ -20,7 +20,7 @@ const persistenceQueueUrl = process.env.PERSISTENCE_QUEUE_URL;
 const bot = new Telegraf(TELEGRAM_TOKEN);
 
 module.exports = () => {
-  if (runningLocally) {    
+  if (runningLocally) {
     bot.telegram.deleteWebhook();
     console.log("started polling for messages...");
     bot.startPolling();
@@ -163,4 +163,22 @@ module.exports = () => {
   bot.use(session());
   bot.use(stage.middleware());
   bot.command("melembre", ctx => ctx.scene.enter("me_lembre"));
+
+  bot.on('callback_query', async ctx => {
+    const uuid = ctx.update.callback_query.data;
+
+    console.log("deleting reminder...")
+
+    const response = await awsSvc.dynamodb.updateItem(remindersTableName, {
+      "uuid": uuid
+    },
+      "set dismissed= :d",
+      {
+        ":d": true
+      });
+
+    if (response.$response.httpResponse.statusCode === 200) {
+      ctx.reply("Lembrete apagado");
+    }
+  });
 };
