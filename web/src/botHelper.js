@@ -9,6 +9,8 @@ const bot = new Telegraf(TELEGRAM_TOKEN);
 bot.on('callback_query', async ctx => {
     const uuid = ctx.update.callback_query.data;
 
+    console.log("deleting reminder...")
+
     const response = await awsSvc.dynamodb.updateItem(remindersTableName, {
         "uuid": uuid
     },
