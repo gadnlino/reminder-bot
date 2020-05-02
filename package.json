@@ -10,7 +10,7 @@
     "start": "node web/src/index.js && node worker/src/index.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.666.0",
     "body-parser": "^1.19.0",

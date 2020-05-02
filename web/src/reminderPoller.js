@@ -16,13 +16,15 @@ module.exports = () => {
         messages.forEach(message=>{
 
             const reminder = JSON.parse(message.Body);
-
+            console.log("Sending reminder: " + reminder.body);
             botHelper.sendReminder(reminder);
-        });
+        });          
     }
   }
 
-  const {REMINDERS_QUEUE_URL} = process.env;
-
-  setInterval(()=> pollSqsQueueAndSendReminders(REMINDERS_QUEUE_URL), 5000);
+  const {REMINDERS_QUEUE_URL, POLL_INTERVAL} = process.env;
+  
+  const interval = parseInt(POLL_INTERVAL);
+  
+  setInterval(()=> pollSqsQueueAndSendReminders(REMINDERS_QUEUE_URL), interval);
 }
