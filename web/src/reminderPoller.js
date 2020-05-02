@@ -14,6 +14,8 @@ module.exports = () => {
 
     const messages = getMessagesResp.Messages;
 
+    console.log(messages);
+
     if(messages && messages.length > 0){
 
         messages.forEach(async message=>{
