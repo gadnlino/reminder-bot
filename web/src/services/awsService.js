@@ -28,6 +28,17 @@ module.exports = {
             const req = sqs.receiveMessage(params);
 
             return req.promise();
+        },
+        
+        deleteMessage: async (QueueUrl, ReceiptHandle) => {
+            const params = {
+                QueueUrl,
+                ReceiptHandle
+            };
+
+            const req = sqs.deleteMessage(params);
+
+            return req.promise();
         }
     },
 
