@@ -20,11 +20,13 @@ const persistenceQueueUrl = process.env.PERSISTENCE_QUEUE_URL;
 const bot = new Telegraf(TELEGRAM_TOKEN);
 
 module.exports = () => {
-  if (runningLocally) {
+  if (runningLocally) {    
     bot.telegram.deleteWebhook();
+    console.log("started polling for messages...");
     bot.startPolling();
   } else {
     bot.telegram.setWebhook(hookPath);
+    console.log("started webhook");
     bot.startWebhook(`/bot${TELEGRAM_TOKEN}`, null, PORT);
   }
 
