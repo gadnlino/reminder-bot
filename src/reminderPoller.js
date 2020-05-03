@@ -1,4 +1,4 @@
-const awsSvc = require("./services/awsService.js.js");
+const awsSvc = require("./services/awsService.js");
 const botHelper = require("./botHelper.js");
 
 module.exports = () => {

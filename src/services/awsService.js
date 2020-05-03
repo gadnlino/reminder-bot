@@ -1,4 +1,4 @@
-const region = "us-east-1";
+const region = process.env.AWS_REGION;
 
 const AWS = require("aws-sdk");
 const sqs = new AWS.SQS({ region });

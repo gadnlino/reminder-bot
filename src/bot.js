@@ -4,7 +4,7 @@ const Stage = require("telegraf/stage");
 const { leave } = Stage;
 const WizardScene = require("telegraf/scenes/wizard");
 const Calendar = require("telegraf-calendar-telegram");
-const awsService = require("./services/awsService.js.js");
+const awsService = require("./services/awsService.js");
 const uuid = require("uuid");
 //const Scene = require('telegraf/scenes/base');
 
