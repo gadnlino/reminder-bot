@@ -163,13 +163,13 @@ module.exports = () => {
   bot.use(session());
   bot.use(stage.middleware());
   bot.command("melembre", ctx => ctx.scene.enter("me_lembre"));
+  bot.command("email", ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`));
+  bot.command("remover_email", ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`));
 
-  bot.on('callback_query', async ctx => {
+  /*bot.on('callback_query', async ctx => {
     const uuid = ctx.update.callback_query.data;
-
     console.log("deleting reminder...")
-
-    const response = await awsSvc.dynamodb.updateItem(remindersTableName, {
+    const response = await awsService.dynamodb.updateItem(remindersTableName, {
       "uuid": uuid
     },
       "set dismissed= :d",
@@ -180,5 +180,5 @@ module.exports = () => {
     if (response.$response.httpResponse.statusCode === 200) {
       ctx.reply("Lembrete apagado");
     }
-  });
+  });*/
 };
