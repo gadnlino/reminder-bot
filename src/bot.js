@@ -4,9 +4,10 @@ const Stage = require("telegraf/stage");
 const { leave } = Stage;
 const WizardScene = require("telegraf/scenes/wizard");
 const Calendar = require("telegraf-calendar-telegram");
-const awsService = require("./services/awsService.js");
 const uuid = require("uuid");
 //const Scene = require('telegraf/scenes/base');
+const awsService = require("./services/awsService.js");
+const botHelper = require("./botHelper.js");
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const URL = process.env.APP_URL;
@@ -61,7 +62,8 @@ module.exports = () => {
       }));
     
       return ctx.wizard.next();
-    };*/
+    };
+  */
 
   const askForDate = ctx => {
     lembrete["assunto"] = ctx.message.text;
@@ -143,6 +145,25 @@ module.exports = () => {
     /*askForExtras,*/
     askForDate
   );
+  
+  const cadastrarEmail = new WizardScene(
+    "cadastrar_email",
+    (ctx)=>{
+      ctx.reply("Me informe seu email: ");
+      return ctx.wizard.next();
+    },    
+    async (ctx)=>{
+      const email = ctx.message.text;
+      const username = ctx.update.message.from.username;
+      
+      console.log(email);
+      
+      await botHelper.registerEmail(email, username);
+      
+      ctx.reply("Email cadastrado!");
+      return ctx.scene.leave();
+    }
+  )
 
   /*const finishConversation = ctx => {
       ctx.reply("lembrete criado.");
@@ -157,28 +178,21 @@ module.exports = () => {
   // Create scene manager
   const stage = new Stage();
   stage.register(criarlembrete);
+  stage.register(cadastrarEmail);
   stage.command("cancelar", leave());
   //stage.register(finalizarConversa);
 
   bot.use(session());
   bot.use(stage.middleware());
   bot.command("melembre", ctx => ctx.scene.enter("me_lembre"));
-  bot.command("email", ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`));
-  bot.command("remover_email", ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`));
-
-  /*bot.on('callback_query', async ctx => {
-    const uuid = ctx.update.callback_query.data;
-    console.log("deleting reminder...")
-    const response = await awsService.dynamodb.updateItem(remindersTableName, {
-      "uuid": uuid
-    },
-      "set dismissed= :d",
-      {
-        ":d": true
-      });
-
-    if (response.$response.httpResponse.statusCode === 200) {
-      ctx.reply("Lembrete apagado");
-    }
-  });*/
+  bot.command("email", ctx=>ctx.scene.enter("cadastrar_email"))
+  /*bot.command(
+    "email", 
+    ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`)
+  );*/
+  bot.command(
+    "remover_email", 
+    //ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`)
+    ctx=>ctx.reply("Email removido!")
+  );
 };
