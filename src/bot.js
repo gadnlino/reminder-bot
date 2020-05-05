@@ -103,39 +103,9 @@ module.exports = () => {
     lembrete["data"] = date;
 
     if (lembrete["data"] && lembrete["assunto"]) {
-      const { data, assunto, username, from_id, chat_id } = lembrete;
-
-      const now = new Date();
-
-      const id = uuid.v1();
-      const reminder_date = new Date(data);
-      reminder_date.setSeconds(now.getSeconds());
-      reminder_date.setMinutes(now.getMinutes());
-      reminder_date.setHours(now.getHours());
-
-      const reminder = {
-        body: assunto,
-        creation_date: now.toISOString(),
-        reminder_date: reminder_date.toISOString(),
-        dismissed: false,
-        uuid: id,
-        username,
-        from_id,
-        chat_id
-      };
-
-      const reminderStr = JSON.stringify(reminder);
-
-      try {
-        const resp = await awsService.sqs.sendMessage(
-          persistenceQueueUrl,
-          reminderStr
-        );
-        console.log(`Lembrete criado: ${reminder}`);
-        ctx.reply("Lembrete criado");
-      } catch (e) {
-        throw e;
-      }
+      await botHelper.sendReminderToQueue(reminder, persistenceQueueUrl);      
+      console.log(`Lembrete criado: ${reminder}`);
+      ctx.reply("Lembrete criado");
     }
   });
 
@@ -163,7 +133,14 @@ module.exports = () => {
       ctx.reply("Email cadastrado!");
       return ctx.scene.leave();
     }
-  )
+  );
+
+  /*const descadastrarEmail = new WizardScene(
+    "",
+    async (ctx)=>{
+
+    }
+  );*/
 
   /*const finishConversation = ctx => {
       ctx.reply("lembrete criado.");
