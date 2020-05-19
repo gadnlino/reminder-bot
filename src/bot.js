@@ -8,6 +8,7 @@ const uuid = require("uuid");
 //const Scene = require('telegraf/scenes/base');
 const awsService = require("./services/awsService.js");
 const botHelper = require("./botHelper.js");
+const utils = require("./utils/utils.js");
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const URL = process.env.APP_URL;
@@ -70,17 +71,27 @@ module.exports = () => {
     //lembrete["extras"] = ctx.message.text;
 
     ctx.reply(
-      "Quando?",
-      calendar
-        .setMinDate(new Date().setMonth(new Date().getMonth()))
-        .setMaxDate(new Date().setMonth(new Date().getMonth() + 12))
-        .getCalendar()
+      "Quando? (Exemplo: dia-mês-ano hora:minuto)"
     );
 
     return ctx.wizard.next();
   };
 
-  const calendar = new Calendar(bot, {
+  const finishConversation = ctx => {
+    console.log(ctx.message.text);
+
+    const date = utils.parseDateWithRegex(ctx.message.text);
+
+    if(date === null){
+      ctx.reply("Não entendi, pode repetir a data?");
+      return;
+    }
+
+    ctx.reply("lembrete criado.");
+    return ctx.scene.leave();
+  };
+
+  /*const calendar = new Calendar(bot, {
     startWeekDay: 0,
     weekDayNames: ["D", "S", "T", "Q", "Q", "S", "S"],
     monthNames: [
@@ -97,9 +108,9 @@ module.exports = () => {
       "Nov",
       "Dez"
     ]
-  });
+  });*/
 
-  calendar.setDateListener(async (ctx, date) => {
+  /*calendar.setDateListener(async (ctx, date) => {
     lembrete["data"] = date;
 
     if (lembrete["data"] && lembrete["assunto"]) {
@@ -107,29 +118,30 @@ module.exports = () => {
       console.log(`Lembrete criado: ${reminder}`);
       ctx.reply("Lembrete criado");
     }
-  });
+  });*/
 
   const criarlembrete = new WizardScene(
     "me_lembre",
     askForReminder,
     /*askForExtras,*/
-    askForDate
+    askForDate,
+    finishConversation
   );
-  
+
   const cadastrarEmail = new WizardScene(
     "cadastrar_email",
-    (ctx)=>{
+    (ctx) => {
       ctx.reply("Me informe seu email: ");
       return ctx.wizard.next();
-    },    
-    async (ctx)=>{
+    },
+    async (ctx) => {
       const email = ctx.message.text;
       const username = ctx.update.message.from.username;
-      
+
       console.log(email);
-      
+
       await botHelper.registerEmail(email, username);
-      
+
       ctx.reply("Email cadastrado!");
       return ctx.scene.leave();
     }
@@ -138,14 +150,11 @@ module.exports = () => {
   /*const descadastrarEmail = new WizardScene(
     "",
     async (ctx)=>{
-
+      
     }
   );*/
 
-  /*const finishConversation = ctx => {
-      ctx.reply("lembrete criado.");
-      return ctx.scene.leave();
-    };*/
+
 
   /*const finalizarConversa = new WizardScene(
       "finalizar_conversa",
@@ -162,14 +171,14 @@ module.exports = () => {
   bot.use(session());
   bot.use(stage.middleware());
   bot.command("melembre", ctx => ctx.scene.enter("me_lembre"));
-  bot.command("email", ctx=>ctx.scene.enter("cadastrar_email"))
+  bot.command("email", ctx => ctx.scene.enter("cadastrar_email"))
   /*bot.command(
     "email", 
     ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`)
   );*/
   bot.command(
-    "remover_email", 
+    "remover_email",
     //ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`)
-    ctx=>ctx.reply("Email removido!")
+    ctx => ctx.reply("Email removido!")
   );
 };
