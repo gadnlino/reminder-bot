@@ -8,6 +8,7 @@ const uuid = require("uuid");
 //const Scene = require('telegraf/scenes/base');
 const awsService = require("./services/awsService.js");
 const botHelper = require("./botHelper.js");
+const utils = require("./utils/utils.js");
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const URL = process.env.APP_URL;
@@ -70,129 +71,85 @@ module.exports = () => {
     //lembrete["extras"] = ctx.message.text;
 
     ctx.reply(
-      "Quando?",
-      calendar
-        .setMinDate(new Date().setMonth(new Date().getMonth()))
-        .setMaxDate(new Date().setMonth(new Date().getMonth() + 12))
-        .getCalendar()
+      "Quando? (Exemplo: 01-04-2020 12:30)"
     );
 
     return ctx.wizard.next();
   };
 
-  const calendar = new Calendar(bot, {
-    startWeekDay: 0,
-    weekDayNames: ["D", "S", "T", "Q", "Q", "S", "S"],
-    monthNames: [
-      "Jan",
-      "Fev",
-      "Mar",
-      "Abr",
-      "Mai",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Set",
-      "Out",
-      "Nov",
-      "Dez"
-    ]
-  });
+  const finishConversation = ctx => {
+    
+    const date = utils.parseDateWithRegex(ctx.message.text);
 
-  calendar.setDateListener(async (ctx, date) => {
-    lembrete["data"] = date;
-
-    if (lembrete["data"] && lembrete["assunto"]) {
-      const { data, assunto, username, from_id, chat_id } = lembrete;
-
-      const now = new Date();
-
-      const id = uuid.v1();
-      const reminder_date = new Date(data);
-      reminder_date.setSeconds(now.getSeconds());
-      reminder_date.setMinutes(now.getMinutes());
-      reminder_date.setHours(now.getHours());
-
-      const reminder = {
-        body: assunto,
-        creation_date: now.toISOString(),
-        reminder_date: reminder_date.toISOString(),
-        dismissed: false,
-        uuid: id,
-        username,
-        from_id,
-        chat_id
-      };
-
-      const reminderStr = JSON.stringify(reminder);
-
-      try {
-        const resp = await awsService.sqs.sendMessage(
-          persistenceQueueUrl,
-          reminderStr
-        );
-        console.log(`Lembrete criado: ${reminder}`);
-        ctx.reply("Lembrete criado");
-      } catch (e) {
-        throw e;
-      }
+    if(date === null){
+      ctx.reply("Não entendi, pode repetir a data?");
+      return;
     }
-  });
+    
+    if(date < new Date()){
+      ctx.reply("Escolha uma data posterior ao momento atual.");
+      return;
+    }
+    
+    lembrete["data"] = date;
+    
+    botHelper.sendReminderToQueue(lembrete, persistenceQueueUrl);
+
+    ctx.reply("Lembrete criado.");
+    return ctx.scene.leave();
+  };
 
   const criarlembrete = new WizardScene(
     "me_lembre",
     askForReminder,
-    /*askForExtras,*/
-    askForDate
+    askForDate,
+    finishConversation
   );
-  
+
   const cadastrarEmail = new WizardScene(
     "cadastrar_email",
-    (ctx)=>{
+    (ctx) => {
       ctx.reply("Me informe seu email: ");
       return ctx.wizard.next();
-    },    
-    async (ctx)=>{
+    },
+    async (ctx) => {
       const email = ctx.message.text;
       const username = ctx.update.message.from.username;
       
-      console.log(email);
-      
       await botHelper.registerEmail(email, username);
-      
+
       ctx.reply("Email cadastrado!");
       return ctx.scene.leave();
     }
-  )
+  );
 
-  /*const finishConversation = ctx => {
-      ctx.reply("lembrete criado.");
-      return ctx.scene.leave();
-    };*/
-
-  /*const finalizarConversa = new WizardScene(
-      "finalizar_conversa",
-      finishConversation
-    );*/
+  /*const descadastrarEmail = new WizardScene(
+    "",
+    async (ctx)=>{
+      
+    }
+  );*/
 
   // Create scene manager
   const stage = new Stage();
   stage.register(criarlembrete);
   stage.register(cadastrarEmail);
   stage.command("cancelar", leave());
-  //stage.register(finalizarConversa);
-
+  
   bot.use(session());
   bot.use(stage.middleware());
   bot.command("melembre", ctx => ctx.scene.enter("me_lembre"));
-  bot.command("email", ctx=>ctx.scene.enter("cadastrar_email"))
+  bot.command("email", ctx => ctx.scene.enter("cadastrar_email"))
   /*bot.command(
     "email", 
     ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`)
   );*/
   bot.command(
-    "remover_email", 
+    "remover_email",
     //ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`)
-    ctx=>ctx.reply("Email removido!")
+    async ctx => {
+      await botHelper.deregisterEmail(ctx.update.message.from.username);
+      ctx.reply("Email removido!");
+    }
   );
 };

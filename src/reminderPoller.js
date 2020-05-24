@@ -14,7 +14,8 @@ module.exports = () => {
 
     const messages = getMessagesResp.Messages;
 
-    console.log(messages);
+    if(messages) 
+      console.log(messages);
 
     if(messages && messages.length > 0){
 
@@ -22,7 +23,7 @@ module.exports = () => {
 
             const reminder = JSON.parse(message.Body);
             console.log("Sending reminder: " + reminder.body);
-            await botHelper.sendReminder(reminder);
+            await botHelper.sendReminderToUser(reminder);
             await awsSvc.sqs.deleteMessage(REMINDERS_QUEUE_URL, message.ReceiptHandle);
         });        
     }
