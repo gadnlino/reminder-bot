@@ -2,6 +2,7 @@ const Telegraf = require('telegraf');
 const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
 const awsSvc = require("./services/awsService.js");
+const uuid = require("uuid");
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const bot = new Telegraf(TELEGRAM_TOKEN);
@@ -23,15 +24,11 @@ module.exports = {
     const now = new Date();
 
     const id = uuid.v1();
-    const reminder_date = new Date(data);
-    reminder_date.setSeconds(now.getSeconds());
-    reminder_date.setMinutes(now.getMinutes());
-    reminder_date.setHours(now.getHours());
-
+    
     reminder = {
       body: assunto,
       creation_date: now.toISOString(),
-      reminder_date: reminder_date.toISOString(),
+      reminder_date: data,
       dismissed: false,
       uuid: id,
       username,
@@ -42,7 +39,7 @@ module.exports = {
     const reminderStr = JSON.stringify(reminder);
 
     try {
-      const resp = await awsService.sqs.sendMessage(
+      const resp = await awsSvc.sqs.sendMessage(
         queueUrl,
         reminderStr
       );
@@ -87,7 +84,7 @@ module.exports = {
     }
   },
 
-  deregisterEmail : async (email, username)=>{
+  deregisterEmail : async (username)=>{
     
     const { SUBSCRIPTIONS_TABLE_NAME } = process.env;
 
@@ -100,24 +97,13 @@ module.exports = {
 
     if (queryResp.Items.length === 1) {
       const item = queryResp.Items[0];
-
-      const newEmails = item.email.filter(e=>e !== email);
-
-      if(newEmails.length === 0){
-
-        
-
-      }
-      else{
-        
-        await awsSvc.dynamodb.updateItem(
+  
+      await awsSvc.dynamodb.updateItem(
           SUBSCRIPTIONS_TABLE_NAME,
           { "username": username },
           "set email = :value",
-          { ":value": newEmail }
-        );
-
-      }
+          { ":value": [] }
+      );
     }
   }
 }

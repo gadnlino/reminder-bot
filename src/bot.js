@@ -71,59 +71,37 @@ module.exports = () => {
     //lembrete["extras"] = ctx.message.text;
 
     ctx.reply(
-      "Quando? (Exemplo: dia-mês-ano hora:minuto)"
+      "Quando? (Exemplo: 01-04-2020 12:30)"
     );
 
     return ctx.wizard.next();
   };
 
   const finishConversation = ctx => {
-    console.log(ctx.message.text);
-
+    
     const date = utils.parseDateWithRegex(ctx.message.text);
 
     if(date === null){
       ctx.reply("Não entendi, pode repetir a data?");
       return;
     }
+    
+    if(date < new Date()){
+      ctx.reply("Escolha uma data posterior ao momento atual.");
+      return;
+    }
+    
+    lembrete["data"] = date;
+    
+    botHelper.sendReminderToQueue(lembrete, persistenceQueueUrl);
 
-    ctx.reply("lembrete criado.");
+    ctx.reply("Lembrete criado.");
     return ctx.scene.leave();
   };
-
-  /*const calendar = new Calendar(bot, {
-    startWeekDay: 0,
-    weekDayNames: ["D", "S", "T", "Q", "Q", "S", "S"],
-    monthNames: [
-      "Jan",
-      "Fev",
-      "Mar",
-      "Abr",
-      "Mai",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Set",
-      "Out",
-      "Nov",
-      "Dez"
-    ]
-  });*/
-
-  /*calendar.setDateListener(async (ctx, date) => {
-    lembrete["data"] = date;
-
-    if (lembrete["data"] && lembrete["assunto"]) {
-      await botHelper.sendReminderToQueue(reminder, persistenceQueueUrl);      
-      console.log(`Lembrete criado: ${reminder}`);
-      ctx.reply("Lembrete criado");
-    }
-  });*/
 
   const criarlembrete = new WizardScene(
     "me_lembre",
     askForReminder,
-    /*askForExtras,*/
     askForDate,
     finishConversation
   );
@@ -137,37 +115,19 @@ module.exports = () => {
     async (ctx) => {
       const email = ctx.message.text;
       const username = ctx.update.message.from.username;
-
-      console.log(email);
-
+      
       await botHelper.registerEmail(email, username);
 
       ctx.reply("Email cadastrado!");
       return ctx.scene.leave();
     }
   );
-
-  /*const descadastrarEmail = new WizardScene(
-    "",
-    async (ctx)=>{
-      
-    }
-  );*/
-
-
-
-  /*const finalizarConversa = new WizardScene(
-      "finalizar_conversa",
-      finishConversation
-    );*/
-
   // Create scene manager
   const stage = new Stage();
   stage.register(criarlembrete);
   stage.register(cadastrarEmail);
   stage.command("cancelar", leave());
-  //stage.register(finalizarConversa);
-
+  
   bot.use(session());
   bot.use(stage.middleware());
   bot.command("melembre", ctx => ctx.scene.enter("me_lembre"));
@@ -179,6 +139,9 @@ module.exports = () => {
   bot.command(
     "remover_email",
     //ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`)
-    ctx => ctx.reply("Email removido!")
+    async ctx => {
+      await botHelper.deregisterEmail(ctx.update.message.from.username);
+      ctx.reply("Email removido!");
+    }
   );
 };

@@ -14,7 +14,8 @@ module.exports = () => {
 
     const messages = getMessagesResp.Messages;
 
-    console.log(messages);
+    if(messages) 
+      console.log(messages);
 
     if(messages && messages.length > 0){
 
