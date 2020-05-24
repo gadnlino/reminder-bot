@@ -122,14 +122,6 @@ module.exports = () => {
       return ctx.scene.leave();
     }
   );
-
-  /*const descadastrarEmail = new WizardScene(
-    "",
-    async (ctx)=>{
-      
-    }
-  );*/
-
   // Create scene manager
   const stage = new Stage();
   stage.register(criarlembrete);

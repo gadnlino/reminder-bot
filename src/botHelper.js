@@ -19,7 +19,6 @@ module.exports = {
   },
 
   sendReminderToQueue: async (reminder, queueUrl) => {
-    
     const { data, assunto, username, from_id, chat_id } = reminder;
 
     const now = new Date();
