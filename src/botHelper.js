@@ -20,30 +20,23 @@ module.exports = {
 
   sendReminderToQueue: async (reminder, queueUrl) => {
     const { data, assunto, username, from_id, chat_id } = reminder;
-
-    const now = new Date();
-
-    const id = uuid.v1();
     
     reminder = {
       body: assunto,
-      creation_date: now.toISOString(),
-      reminder_date: data,
+      creation_date: new Date().toISOString(),
+      reminder_date: data.toISOString(),
       dismissed: false,
-      uuid: id,
+      uuid: uuid.v1(),
       username,
       from_id,
       chat_id
     };
 
-    const reminderStr = JSON.stringify(reminder);
-
     try {
       const resp = await awsSvc.sqs.sendMessage(
         queueUrl,
-        reminderStr
+        JSON.stringify(reminder)
       );
-
     } catch (e) {
       throw e;
     }
@@ -84,8 +77,8 @@ module.exports = {
     }
   },
 
-  deregisterEmail : async (username)=>{
-    
+  deregisterEmail: async (email, username) => {
+
     const { SUBSCRIPTIONS_TABLE_NAME } = process.env;
 
     const queryResp = await awsSvc.dynamodb.queryItems(
@@ -97,8 +90,17 @@ module.exports = {
 
     if (queryResp.Items.length === 1) {
       const item = queryResp.Items[0];
-  
-      await awsSvc.dynamodb.updateItem(
+
+      const newEmails = item.email.filter(e => e !== email);
+
+      if (newEmails.length === 0) {
+
+
+
+      }
+      else {
+
+        await awsSvc.dynamodb.updateItem(
           SUBSCRIPTIONS_TABLE_NAME,
           { "username": username },
           "set email = :value",

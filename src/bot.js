@@ -45,30 +45,11 @@ module.exports = () => {
     return ctx.wizard.next();
   };
 
-  /*const askForExtras = ctx => {
-      lembrete["assunto"] = ctx.message.text;
-    
-      //Colocar inline keyboard para a peessoa decidir se quer alguma observacao adicional ou nao
-    
-      ctx.reply("Alguma observacao adicional?", Extra.HTML().markup((m) => {
-        m.keyboard(['Menu'])
-          .oneTime()
-          .resize()
-          .extra();
-        m.inlineKeyboard([
-          m.callbackButton('Inline Menu1', 'cbMenu1'),
-          m.callbackButton('Inline Menu2', 'cbMenu2')
-        ])
-        return m.extra();
-      }));
-    
-      return ctx.wizard.next();
-    };
-  */
-
   const askForDate = ctx => {
-    lembrete["assunto"] = ctx.message.text;
-    //lembrete["extras"] = ctx.message.text;
+    lembrete = {
+      ...lembrete,
+      assunto : ctx.message.text
+    };
 
     ctx.reply(
       "Quando? (Exemplo: 01-04-2020 12:30)"
@@ -77,8 +58,7 @@ module.exports = () => {
     return ctx.wizard.next();
   };
 
-  const finishConversation = ctx => {
-    
+  const finishConversation = async ctx => {
     const date = utils.parseDateWithRegex(ctx.message.text);
 
     if(date === null){
@@ -91,12 +71,24 @@ module.exports = () => {
       return;
     }
     
-    lembrete["data"] = date;
+    // lembrete["data"] = date;
     
-    botHelper.sendReminderToQueue(lembrete, persistenceQueueUrl);
+    // botHelper.sendReminderToQueue(lembrete, persistenceQueueUrl);
 
-    ctx.reply("Lembrete criado.");
-    return ctx.scene.leave();
+    if (date && lembrete["assunto"]) {
+
+      lembrete = {
+        ...lembrete,
+        data: date
+      };
+
+      await botHelper.sendReminderToQueue(lembrete, persistenceQueueUrl);      
+      console.log(`Lembrete criado: ${lembrete}`);
+      
+      ctx.reply("Lembrete criado");
+
+      return ctx.scene.leave();
+    }
   };
 
   const criarlembrete = new WizardScene(

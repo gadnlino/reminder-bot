@@ -7,15 +7,14 @@ module.exports = () => {
 
   async function pollSqsQueueAndSendReminders() {
     
-    console.log("polling reminders...");
+    //console.log("polling reminders...");
     
     const getMessagesResp = await awsSvc.sqs
               .getMessages(REMINDERS_QUEUE_URL);
 
     const messages = getMessagesResp.Messages;
 
-    if(messages) 
-      console.log(messages);
+    //console.log(messages);
 
     if(messages && messages.length > 0){
 
