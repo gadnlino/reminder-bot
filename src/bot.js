@@ -3,12 +3,12 @@ const session = require("telegraf/session");
 const Stage = require("telegraf/stage");
 const { leave } = Stage;
 const WizardScene = require("telegraf/scenes/wizard");
-const Calendar = require("telegraf-calendar-telegram");
-const uuid = require("uuid");
+//const Calendar = require("telegraf-calendar-telegram");
 //const Scene = require('telegraf/scenes/base');
-const awsService = require("./services/awsService.js");
+//const awsService = require("./services/awsService.js");
 const botHelper = require("./botHelper.js");
 const utils = require("./utils/utils.js");
+const uuid = require("uuid");
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const URL = process.env.APP_URL;
@@ -22,6 +22,7 @@ const persistenceQueueUrl = process.env.PERSISTENCE_QUEUE_URL;
 const bot = new Telegraf(TELEGRAM_TOKEN);
 
 module.exports = () => {
+
   if (runningLocally) {
     bot.telegram.deleteWebhook();
     console.log("started polling for messages...");
@@ -48,7 +49,7 @@ module.exports = () => {
   const askForDate = ctx => {
     lembrete = {
       ...lembrete,
-      assunto : ctx.message.text
+      assunto: ctx.message.text
     };
 
     ctx.reply(
@@ -61,19 +62,15 @@ module.exports = () => {
   const finishConversation = async ctx => {
     const date = utils.parseDateWithRegex(ctx.message.text);
 
-    if(date === null){
+    if (date === null) {
       ctx.reply("Não entendi, pode repetir a data?");
       return;
     }
-    
-    if(date < new Date()){
+
+    if (date < new Date()) {
       ctx.reply("Escolha uma data posterior ao momento atual.");
       return;
     }
-    
-    // lembrete["data"] = date;
-    
-    // botHelper.sendReminderToQueue(lembrete, persistenceQueueUrl);
 
     if (date && lembrete["assunto"]) {
 
@@ -82,23 +79,23 @@ module.exports = () => {
         data: date
       };
 
-      await botHelper.sendReminderToQueue(lembrete, persistenceQueueUrl);      
+      await botHelper.sendReminderToQueue(lembrete, persistenceQueueUrl);
       console.log(`Lembrete criado: ${lembrete}`);
-      
+
       ctx.reply("Lembrete criado");
 
       return ctx.scene.leave();
     }
   };
 
-  const criarlembrete = new WizardScene(
+  const createReminder = new WizardScene(
     "me_lembre",
     askForReminder,
     askForDate,
     finishConversation
   );
 
-  const cadastrarEmail = new WizardScene(
+  const registerEmail = new WizardScene(
     "cadastrar_email",
     (ctx) => {
       ctx.reply("Me informe seu email: ");
@@ -107,33 +104,30 @@ module.exports = () => {
     async (ctx) => {
       const email = ctx.message.text;
       const username = ctx.update.message.from.username;
-      
+
       await botHelper.registerEmail(email, username);
 
       ctx.reply("Email cadastrado!");
       return ctx.scene.leave();
     }
   );
-  // Create scene manager
-  const stage = new Stage();
-  stage.register(criarlembrete);
-  stage.register(cadastrarEmail);
-  stage.command("cancelar", leave());
-  
-  bot.use(session());
-  bot.use(stage.middleware());
-  bot.command("melembre", ctx => ctx.scene.enter("me_lembre"));
-  bot.command("email", ctx => ctx.scene.enter("cadastrar_email"))
-  /*bot.command(
-    "email", 
-    ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`)
-  );*/
-  bot.command(
+
+  const deregisterEmail = new WizardScene(
     "remover_email",
-    //ctx=>ctx.reply(`Funcionalidade vem em breve! Aguarde as novidades em ${process.env.PROJECT_REPO_URL}`)
     async ctx => {
       await botHelper.deregisterEmail(ctx.update.message.from.username);
       ctx.reply("Email removido!");
     }
   );
+
+  const stage = new Stage();
+  stage.register(createReminder);
+  stage.register(registerEmail);
+  stage.command("cancelar", leave());
+
+  bot.use(session());
+  bot.use(stage.middleware());
+  bot.command("melembre", ctx => ctx.scene.enter("me_lembre"));
+  bot.command("email", ctx => ctx.scene.enter("cadastrar_email"));
+  bot.command("remover_email", ctx => ctx.scene.enter("remover_email"));
 };

@@ -20,7 +20,7 @@ module.exports = {
 
   sendReminderToQueue: async (reminder, queueUrl) => {
     const { data, assunto, username, from_id, chat_id } = reminder;
-    
+
     reminder = {
       body: assunto,
       creation_date: new Date().toISOString(),
@@ -93,19 +93,14 @@ module.exports = {
 
       const newEmails = item.email.filter(e => e !== email);
 
-      if (newEmails.length === 0) {
-
-
-
-      }
-      else {
-
+      if (newEmails.length > 0) {
         await awsSvc.dynamodb.updateItem(
           SUBSCRIPTIONS_TABLE_NAME,
           { "username": username },
           "set email = :value",
           { ":value": [] }
-      );
+        );
+      }
     }
   }
 }
