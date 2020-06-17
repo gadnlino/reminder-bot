@@ -3,6 +3,8 @@ const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
 const awsSvc = require("./services/awsService.js");
 const uuid = require("uuid");
+const axios = require("axios");
+const { default: Axios } = require('axios');
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const bot = new Telegraf(TELEGRAM_TOKEN);
@@ -12,7 +14,7 @@ module.exports = {
   sendReminderToUser: async (reminder) => {
 
     bot.telegram
-      .sendMessage(reminder.chat_id, `⏰⏰Lembrete!!! : ${reminder.body}⏰⏰`,
+      .sendMessage(reminder.chat_id, `⏰⏰ Lembrete!!! : ${reminder.body} ⏰⏰`,
         Extra.markup(Markup.inlineKeyboard([
           Markup.callbackButton('Já lembrei!', reminder.uuid, true)
         ])));
@@ -42,7 +44,9 @@ module.exports = {
     }
   },
 
-  registerEmail: async (email, username) => {
+  registerEmail: async (options) => {
+
+    const { first_name, last_name, email, username } = options;
 
     const { SUBSCRIPTIONS_TABLE_NAME } = process.env;
 
@@ -54,9 +58,12 @@ module.exports = {
     );
 
     if (queryResp.Items.length === 0) {
+
       const item = {
         "username": username,
-        "email": [email]
+        "email": [email],
+        "first_name": first_name,
+        "last_name": last_name
       };
 
       await awsSvc.dynamodb.putItem(SUBSCRIPTIONS_TABLE_NAME, item);
@@ -76,7 +83,6 @@ module.exports = {
       }
     }
   },
-
   deregisterEmail: async (email, username) => {
 
     const { SUBSCRIPTIONS_TABLE_NAME } = process.env;
@@ -102,5 +108,15 @@ module.exports = {
         );
       }
     }
+  },
+
+  uploadFile: async (fileStream, extension) => {
+    const fileName = uuid.v1() + "." + extension;
+  },
+
+  downloadFile : async (downloadLink)=>{
+    const response = await Axios({method : "GET", url : downloadLink, responseType : "stream"});
+
+    return response.data;
   }
 }

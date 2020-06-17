@@ -5,6 +5,7 @@ const sqs = new AWS.SQS({ region });
 const docClient = new AWS.DynamoDB.DocumentClient({ region });
 const cwevents = new AWS.CloudWatchEvents({ region });
 const lambda = new AWS.Lambda({ region });
+const s3 = new AWS.S3({ region });
 
 module.exports = {
     sqs: {
@@ -29,7 +30,7 @@ module.exports = {
 
             return req.promise();
         },
-        
+
         deleteMessage: async (QueueUrl, ReceiptHandle) => {
             const params = {
                 QueueUrl,
@@ -102,7 +103,7 @@ module.exports = {
 
             return req.promise();
         },
-        putTargets : async (Rule, Targets)=>{
+        putTargets: async (Rule, Targets) => {
 
             const params = {
                 Rule,
@@ -126,6 +127,19 @@ module.exports = {
             };
 
             const req = lambda.addPermission(params);
+
+            return req.promise();
+        }
+    },
+
+    s3: {
+        uploadFile: async (Bucket, Key, File) => {
+
+            var params = {
+                Bucket, Key, File
+            };
+
+            const req = s3.upload(params);
 
             return req.promise();
         }
