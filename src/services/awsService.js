@@ -1,6 +1,9 @@
+const AWS = require("aws-sdk");
+const dotenv = require("dotenv");
+dotenv.config();
+
 const region = process.env.AWS_REGION;
 
-const AWS = require("aws-sdk");
 const sqs = new AWS.SQS({ region });
 const docClient = new AWS.DynamoDB.DocumentClient({ region });
 const cwevents = new AWS.CloudWatchEvents({ region });

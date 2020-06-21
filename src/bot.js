@@ -10,6 +10,8 @@ const WizardScene = require("telegraf/scenes/wizard");
 const botHelper = require("./botHelper.js");
 const utils = require("./utils/utils.js");
 const uuid = require("uuid");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const URL = process.env.APP_URL;
@@ -62,6 +64,8 @@ module.exports = () => {
 
     const mp4File = video || animation || video_note || undefined;
 
+    let file;
+
     if (text) {
       lembrete = {
         ...lembrete,
@@ -69,98 +73,34 @@ module.exports = () => {
       };
     }
     else if (photo) {
-      //jpg
-      const file = Telegram.getFile(photo.fileId);
-
-      const downloadLink = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${file.file_path}`;
-
-      const fileStream = await botHelper.downloadFile(downloadLink);
-
-      const s3FileKey = await botHelper.uploadFile(fileStream, "jpg");
-
-      lembrete = {
-        ...lembrete,
-        photo : s3FileKey
-      }
+      file = Telegram.getFile(photo.fileId)
     }
     else if (sticker) {
-      //webp
-
-      const file = Telegram.getFile(sticker.fileId);
-
-      const downloadLink = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${file.file_path}`;
-
-      const fileStream = await botHelper.downloadFile(downloadLink);
-
-      const s3FileKey = await botHelper.uploadFile(fileStream, "webp");
-
-      lembrete = {
-        ...lembrete,
-        sticker : s3FileKey
-      }
+      file = Telegram.getFile(sticker.fileId);
     }
     else if (mp4File) {
-      const file = Telegram.getFile(mp4File.fileId);
-
-      const downloadLink = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${file.file_path}`;
-
-      const fileStream = await botHelper.downloadFile(downloadLink);
-
-      const s3FileKey = await botHelper.uploadFile(fileStream, "mp4");
-
-      lembrete = {
-        ...lembrete,
-        mp4File : s3FileKey
-      }
+      file = Telegram.getFile(mp4File.fileId);
     }
     else if (voice) {
-      //ogg
-      
-      const file = Telegram.getFile(voice.fileId);
-
-      const downloadLink = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${file.file_path}`;
-
-      const fileStream = await botHelper.downloadFile(downloadLink);
-
-      const s3FileKey = await botHelper.uploadFile(fileStream, "ogg");
-
-      lembrete = {
-        ...lembrete,
-        voice : s3FileKey
-      }
+      file = Telegram.getFile(voice.fileId);
     }
-    else if(audio){
-      //mp3
-
-      const file = Telegram.getFile(audio.fileId);
-
-      const downloadLink = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${file.file_path}`;
-
-      const fileStream = await botHelper.downloadFile(downloadLink);
-
-      const s3FileKey =  await botHelper.uploadFile(fileStream, "mp3"); 
-      
-      lembrete = {
-        ...lembrete,
-        audio : s3FileKey
-      }
+    else if (audio) {
+      file = Telegram.getFile(audio.fileId);
     }
-    else if(document){
+    else if (document) {
       //custom extension
-      const file = Telegram.getFile(document.fileId);
+      file = Telegram.getFile(document.fileId);
+    }
 
-      const downloadLink = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${file.file_path}`;
+    // const downloadLink = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${file.file_path}`;
 
-      const fileStream = await botHelper.downloadFile(downloadLink);
+    if (file) {
+      const { file_path } = file;
 
-      const extension = file.file_path.substring(file.file_path.lastIndexOf("."));
-
-      const s3FileKey = await botHelper.uploadFile(fileStream, extension); 
-      
       lembrete = {
         ...lembrete,
-        document : s3FileKey
-      }
+        file_path
+      };
     }
 
     ctx.reply(
@@ -238,6 +178,7 @@ module.exports = () => {
   const stage = new Stage();
   stage.register(createReminder);
   stage.register(registerEmail);
+  stage.register(deregisterEmail);
   stage.command("cancelar", leave());
 
   bot.use(session());

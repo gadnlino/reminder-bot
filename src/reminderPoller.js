@@ -1,5 +1,8 @@
 const awsSvc = require("./services/awsService.js");
 const botHelper = require("./botHelper.js");
+const dotenv = require("dotenv");
+dotenv.config();
+
 
 module.exports = () => {
   

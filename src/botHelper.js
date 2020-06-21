@@ -21,7 +21,7 @@ module.exports = {
   },
 
   sendReminderToQueue: async (reminder, queueUrl) => {
-    const { data, assunto, username, from_id, chat_id } = reminder;
+    const { data, assunto, username, from_id, chat_id, file_path } = reminder;
 
     reminder = {
       body: assunto,
@@ -31,7 +31,8 @@ module.exports = {
       uuid: uuid.v1(),
       username,
       from_id,
-      chat_id
+      chat_id,
+      file_path
     };
 
     try {
@@ -83,39 +84,41 @@ module.exports = {
       }
     }
   },
-  deregisterEmail: async (email, username) => {
-
+  deregisterEmail: async (username) => {
+    
     const { SUBSCRIPTIONS_TABLE_NAME } = process.env;
 
-    const queryResp = await awsSvc.dynamodb.queryItems(
+    await awsSvc.dynamodb.updateItem(
       SUBSCRIPTIONS_TABLE_NAME,
-      "#id = :value",
-      { "#id": "username" },
-      { ":value": username }
+      { "username": username },
+      "set email = :value",
+      { ":value": [] }
     );
 
-    if (queryResp.Items.length === 1) {
-      const item = queryResp.Items[0];
+    // const queryResp = await awsSvc.dynamodb.queryItems(
+    //   SUBSCRIPTIONS_TABLE_NAME,
+    //   "#id = :value",
+    //   { "#id": "username" },
+    //   { ":value": username }
+    // );
 
-      const newEmails = item.email.filter(e => e !== email);
+    // if (queryResp.Items.length === 1) {
+    //   const item = queryResp.Items[0];
 
-      if (newEmails.length > 0) {
-        await awsSvc.dynamodb.updateItem(
-          SUBSCRIPTIONS_TABLE_NAME,
-          { "username": username },
-          "set email = :value",
-          { ":value": [] }
-        );
-      }
-    }
+    //   const newEmails = item.email.filter(e => e !== email);
+
+    //   if (newEmails.length > 0) {
+    //     
+    //   }
+    // }
   },
 
   uploadFile: async (fileStream, extension) => {
     const fileName = uuid.v1() + "." + extension;
   },
 
-  downloadFile : async (downloadLink)=>{
-    const response = await Axios({method : "GET", url : downloadLink, responseType : "stream"});
+  downloadFile: async (downloadLink) => {
+    const response = await Axios({ method: "GET", url: downloadLink, responseType: "stream" });
 
     return response.data;
   }
