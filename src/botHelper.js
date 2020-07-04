@@ -1,27 +1,15 @@
-const Telegraf = require('telegraf');
-const Extra = require('telegraf/extra');
-const Markup = require('telegraf/markup');
 const awsSvc = require("./services/awsService.js");
 const uuid = require("uuid");
-const axios = require("axios");
 const { default: Axios } = require('axios');
+const dotenv = require("dotenv");
 
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
-const bot = new Telegraf(TELEGRAM_TOKEN);
+dotenv.config();
 
 module.exports = {
 
-  sendReminderToUser: async (reminder) => {
-
-    bot.telegram
-      .sendMessage(reminder.chat_id, `⏰⏰ Lembrete!!! : ${reminder.body} ⏰⏰`,
-        Extra.markup(Markup.inlineKeyboard([
-          Markup.callbackButton('Já lembrei!', reminder.uuid, true)
-        ])));
-  },
-
-  sendReminderToQueue: async (reminder, queueUrl) => {
-    const { data, assunto, username, from_id, chat_id, file_path } = reminder;
+  persistReminder: async (reminder) => {
+    const { data, assunto, username, from_id,
+      chat_id, file_path } = reminder;
 
     reminder = {
       body: assunto,
@@ -37,12 +25,21 @@ module.exports = {
 
     try {
       const resp = await awsSvc.sqs.sendMessage(
-        queueUrl,
+        process.env.PERSISTENCE_QUEUE_URL,
         JSON.stringify(reminder)
       );
     } catch (e) {
       throw e;
     }
+  },
+
+  searchReminders: async function () {
+    const getMessagesResp = await awsSvc.sqs
+      .getMessages(process.env.REMINDERS_QUEUE_URL);
+
+    const messages = getMessagesResp.Messages;
+
+    return messages && messages.map(m => m.Body) || null;
   },
 
   registerEmail: async (options) => {
@@ -85,7 +82,7 @@ module.exports = {
     }
   },
   deregisterEmail: async (username) => {
-    
+
     const { SUBSCRIPTIONS_TABLE_NAME } = process.env;
 
     await awsSvc.dynamodb.updateItem(
@@ -94,32 +91,15 @@ module.exports = {
       "set email = :value",
       { ":value": [] }
     );
-
-    // const queryResp = await awsSvc.dynamodb.queryItems(
-    //   SUBSCRIPTIONS_TABLE_NAME,
-    //   "#id = :value",
-    //   { "#id": "username" },
-    //   { ":value": username }
-    // );
-
-    // if (queryResp.Items.length === 1) {
-    //   const item = queryResp.Items[0];
-
-    //   const newEmails = item.email.filter(e => e !== email);
-
-    //   if (newEmails.length > 0) {
-    //     
-    //   }
-    // }
   },
 
-  uploadFile: async (fileStream, extension) => {
-    const fileName = uuid.v1() + "." + extension;
-  },
+  // uploadFile: async (fileStream, extension) => {
+  //   const fileName = uuid.v1() + "." + extension;
+  // },
 
-  downloadFile: async (downloadLink) => {
-    const response = await Axios({ method: "GET", url: downloadLink, responseType: "stream" });
+  // downloadFile: async (downloadLink) => {
+  //   const response = await Axios({ method: "GET", url: downloadLink, responseType: "stream" });
 
-    return response.data;
-  }
+  //   return response.data;
+  // }
 }
