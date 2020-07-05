@@ -28,8 +28,7 @@ module.exports = {
   },
 
   sendMessage: function (chat_id, message) {
-    bot.telegram
-      .sendMessage(reminder.chat_id, `⏰⏰ Lembrete!!! : ${reminder.body} ⏰⏰`);
+    bot.telegram.sendMessage(chat_id, message);
   },
 
   createCommand: function(command, scene_id){

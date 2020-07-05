@@ -2,6 +2,9 @@ const bot = require("./bot.js");
 const awsSvc = require("./services/awsService");
 const botHelper = require("./botHelper.js");
 const scenes = require("./scenes/scenes.js");
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 try {
     bot.createStage([
@@ -14,24 +17,29 @@ try {
     bot.createCommand("email", "register_email");
     bot.createCommand("remover_email", "unregister_email");
 
+    bot.init(process.env.RUNNING_LOCALLY &&
+        process.env.RUNNING_LOCALLY.toLowerCase() === "true");
+
     setInterval(async () => {
 
-        const reminders = await botHelper.searchReminders();
+        const messages = await botHelper.searchReminders();
 
-        if (reminders) {
-            reminders.forEach(async reminder => {
+        if (messages) {
 
-                console.log("Sending reminder: " + JSON.stringify(reminder.body));
+            console.log(messages.length);
+            
+            messages.forEach(async message => {
+                
+                const { reminder, receiptHandle} = message;
+
+                console.log("Sending reminder: " + JSON.stringify(reminder));
                 const notification = `⏰⏰ Lembrete!!! : ${reminder.body} ⏰⏰`;
                 bot.sendMessage(reminder.chat_id, notification);
-                await awsSvc.sqs.deleteMessage(REMINDERS_QUEUE_URL, message.ReceiptHandle);
+                await awsSvc.sqs.deleteMessage(process.env.REMINDERS_QUEUE_URL, receiptHandle);
             });
         }
 
     }, parseInt(process.env.POLL_INTERVAL));
-
-    bot.init(process.env.RUNNING_LOCALLY &&
-        process.env.RUNNING_LOCALLY.toLowerCase() === "true");
 }
 catch (e) {
     console.log(e.stack);

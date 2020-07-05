@@ -37,9 +37,7 @@ if (matches === null) {
     const [data, horario] = value.split(" ");
     const [diaStr, mesStr, anoStr] = data.split("-");
     const [horaStr, minutoStr] = horario.split(":");
-
-    //console.log(diaStr,mesStr,anoStr,horaStr,minutoStr);
-
+    
     let dia, mes, ano, hora, minuto;
 
     if (diaStr.length === 2 && diaStr.startsWith("0")) {
@@ -78,17 +76,7 @@ if (matches === null) {
     else if (parseInt(horaStr) <= 59) { minuto = parseInt(minutoStr) }
     else return null;
     
-    const dateString = `${mes}/${dia}/${ano} ${hora+3}:${minuto}:00`;
-    //2011-10-10T14:48:00.000+09:00
-    //const dateString = `${ano}-${mes}-${dia}T${hora}:${minuto}:00.000-03:00`;
-
-    
-    //console.log(moment.tz.guess());
-
-    /*return moment
-      .tz(`${ano}-${mes}-${dia} ${hora}:${minuto}`, "America/Sao_Paulo")
-      .utc()
-      .toDate();*/
+    const dateString = `${mes}/${dia}/${ano} ${hora}:${minuto}:00`;
 
     return new Date(dateString);
   }

@@ -24,22 +24,24 @@ module.exports = {
     };
 
     try {
-      const resp = await awsSvc.sqs.sendMessage(
-        process.env.PERSISTENCE_QUEUE_URL,
-        JSON.stringify(reminder)
-      );
+      await awsSvc.sqs.sendMessage(process.env.PERSISTENCE_QUEUE_URL, JSON.stringify(reminder));
     } catch (e) {
       throw e;
     }
   },
 
   searchReminders: async function () {
+    console.log("search reminders");
+
     const getMessagesResp = await awsSvc.sqs
       .getMessages(process.env.REMINDERS_QUEUE_URL);
 
     const messages = getMessagesResp.Messages;
 
-    return messages && messages.map(m => m.Body) || null;
+    return messages && messages.map(m => ({
+      reminder : JSON.parse(m.Body),
+      receiptHandle : m.ReceiptHandle
+    })) || null;
   },
 
   registerEmail: async (options) => {
@@ -81,6 +83,7 @@ module.exports = {
       }
     }
   },
+
   deregisterEmail: async (username) => {
 
     const { SUBSCRIPTIONS_TABLE_NAME } = process.env;
@@ -91,15 +94,5 @@ module.exports = {
       "set email = :value",
       { ":value": [] }
     );
-  },
-
-  // uploadFile: async (fileStream, extension) => {
-  //   const fileName = uuid.v1() + "." + extension;
-  // },
-
-  // downloadFile: async (downloadLink) => {
-  //   const response = await Axios({ method: "GET", url: downloadLink, responseType: "stream" });
-
-  //   return response.data;
-  // }
+  }
 }
