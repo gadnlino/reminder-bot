@@ -1,46 +1,47 @@
 const awsSvc = require("./services/awsService.js");
 const uuid = require("uuid");
 const { default: Axios } = require('axios');
-const dotenv = require("dotenv");
-
-dotenv.config();
+const config = require("./config.js");
 
 module.exports = {
 
   persistReminder: async (reminder) => {
-    const { data, assunto, username, from_id,
-      chat_id, file_path } = reminder;
-
-    reminder = {
-      body: assunto,
-      creation_date: new Date().toISOString(),
-      reminder_date: data.toISOString(),
-      dismissed: false,
-      uuid: uuid.v1(),
+    const {
+      data,
+      assunto,
       username,
       from_id,
       chat_id,
       file_path
-    };
+    } = reminder;
 
     try {
-      await awsSvc.sqs.sendMessage(process.env.PERSISTENCE_QUEUE_URL, JSON.stringify(reminder));
+      await awsSvc.sqs.sendMessage(config.persistenceQueueUrl,
+        JSON.stringify({
+          body: assunto,
+          creation_date: new Date().toISOString(),
+          reminder_date: data.toISOString(),
+          dismissed: false,
+          uuid: uuid.v1(),
+          username,
+          from_id,
+          chat_id,
+          file_path
+        }));
     } catch (e) {
       throw e;
     }
   },
 
   searchReminders: async function () {
-    console.log("search reminders");
-
     const getMessagesResp = await awsSvc.sqs
-      .getMessages(process.env.REMINDERS_QUEUE_URL);
+      .getMessages(config.remindersQueueUrl);
 
     const messages = getMessagesResp.Messages;
 
     return messages && messages.map(m => ({
-      reminder : JSON.parse(m.Body),
-      receiptHandle : m.ReceiptHandle
+      reminder: JSON.parse(m.Body),
+      receiptHandle: m.ReceiptHandle
     })) || null;
   },
 
@@ -48,10 +49,8 @@ module.exports = {
 
     const { first_name, last_name, email, username } = options;
 
-    const { SUBSCRIPTIONS_TABLE_NAME } = process.env;
-
     const queryResp = await awsSvc.dynamodb.queryItems(
-      SUBSCRIPTIONS_TABLE_NAME,
+      config.subscriptionsTableName,
       "#id = :value",
       { "#id": "username" },
       { ":value": username }
@@ -66,7 +65,7 @@ module.exports = {
         "last_name": last_name
       };
 
-      await awsSvc.dynamodb.putItem(SUBSCRIPTIONS_TABLE_NAME, item);
+      await awsSvc.dynamodb.putItem(config.subscriptionsTableName, item);
     }
     else if (queryResp.Items.length === 1) {
       const item = queryResp.Items[0];
@@ -75,7 +74,7 @@ module.exports = {
         const newEmail = [...item.email, email];
 
         await awsSvc.dynamodb.updateItem(
-          SUBSCRIPTIONS_TABLE_NAME,
+          config.subscriptionsTableName,
           { "username": username },
           "set email = :value",
           { ":value": newEmail }
@@ -86,10 +85,8 @@ module.exports = {
 
   deregisterEmail: async (username) => {
 
-    const { SUBSCRIPTIONS_TABLE_NAME } = process.env;
-
     await awsSvc.dynamodb.updateItem(
-      SUBSCRIPTIONS_TABLE_NAME,
+      config.subscriptionsTableName,
       { "username": username },
       "set email = :value",
       { ":value": [] }

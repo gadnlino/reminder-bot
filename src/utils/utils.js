@@ -1,7 +1,5 @@
-const moment = require("moment-timezone");
-
 module.exports = {
-  parseDateWithRegex: function (value) {
+  parseDate: function (value) {
     /*console.log(value);
 //var matches = value.match(/^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
 var matches = value.match(/^(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2})$/);
@@ -35,9 +33,12 @@ if (matches === null) {
 }*/
 
     const [data, horario] = value.split(" ");
+
+    if (!(data && horario)) return null;
+
     const [diaStr, mesStr, anoStr] = data.split("-");
     const [horaStr, minutoStr] = horario.split(":");
-    
+
     let dia, mes, ano, hora, minuto;
 
     if (diaStr.length === 2 && diaStr.startsWith("0")) {
@@ -75,7 +76,7 @@ if (matches === null) {
     }
     else if (parseInt(horaStr) <= 59) { minuto = parseInt(minutoStr) }
     else return null;
-    
+
     const dateString = `${mes}/${dia}/${ano} ${hora}:${minuto}:00`;
 
     return new Date(dateString);

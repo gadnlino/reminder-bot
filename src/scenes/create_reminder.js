@@ -1,12 +1,11 @@
 const WizardScene = require("telegraf/scenes/wizard");
 const Telegram = require("telegraf/telegram");
 const utils = require("../utils/utils.js");
-const botHelper = require("../botHelper.js");
-
-let lembrete = {};
+const botHelper = require("../helpers.js");
 
 const askForReminder = ctx => {
-    lembrete = {
+    
+    ctx.session.__scenes.state.lembrete = {
         username: ctx.update.message.from.username,
         from_id: ctx.from.id,
         chat_id: ctx.chat.id
@@ -17,6 +16,7 @@ const askForReminder = ctx => {
 };
 
 const askForDate = async ctx => {
+    let {lembrete} = ctx.session.__scenes.state;
 
     const {
         text,
@@ -71,6 +71,8 @@ const askForDate = async ctx => {
         };
     }
 
+    ctx.session.__scenes.state.lembrete = lembrete;
+
     ctx.reply(
         `Quando? (Exemplo: 01-04-2020 12:30)`
     );
@@ -79,16 +81,21 @@ const askForDate = async ctx => {
 };
 
 const finishConversation = async ctx => {
-    const date = utils.parseDateWithRegex(ctx.message.text);
+    let {lembrete} = ctx.session.__scenes.state;
+
+    const date = utils.parseDate(ctx.message.text);
     
     if (date === null) {
-        ctx.reply("Não entendi, pode repetir a data?");
-        return;
+        ctx.reply("Não entendi, pode repetir a data? (Exemplo: Exemplo: 01-04-2020 12:30)");
+
+        //Bot irá permanecer nesse step até que uma data válida seja preenchida;
+        return ctx.wizard.selectStep(ctx.wizard.cursor);
     }
 
     if (date < new Date()) {
         ctx.reply("Escolha uma data posterior ao momento atual.");
-        return;
+        
+        return ctx.wizard.selectStep(ctx.wizard.cursor);
     }
 
     if (date && lembrete["assunto"]) {
@@ -100,6 +107,8 @@ const finishConversation = async ctx => {
         await botHelper.persistReminder(lembrete);
         console.log(`Lembrete criado: ${JSON.stringify(lembrete)}`);
 
+        ctx.session.__scenes.state.lembrete = lembrete;
+        
         ctx.reply("Lembrete criado");
 
         return ctx.scene.leave();

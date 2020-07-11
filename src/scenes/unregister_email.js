@@ -1,5 +1,5 @@
 const WizardScene = require("telegraf/scenes/wizard");
-const botHelper = require("../botHelper.js");
+const botHelper = require("../helpers.js");
 
 module.exports = new WizardScene(
     "unregister_email",
