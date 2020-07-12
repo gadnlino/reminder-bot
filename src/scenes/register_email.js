@@ -19,7 +19,15 @@ module.exports = new WizardScene(
         return ctx.wizard.next();
     },
     async (ctx) => {
+        
         const email = ctx.message.text;
+        const confirmationCode = utils.generateConfirmationCode();
+        const username = ctx.message.from.username ||
+            ctx.update.message.from.username;
+        const from_id = ctx.from.id;
+        const chat_id = ctx.chat.id;
+        const first_name = ctx.update.message.from.first_name;
+        const last_name = ctx.update.message.from.last_name;
 
         const error = validateEmail(email);
 
@@ -28,50 +36,63 @@ module.exports = new WizardScene(
             return ctx.wizard.selectStep(ctx.wizard.cursor);
         }
 
-        const confirmationCode = utils.generateConfirmationCode();
-        const username = ctx.update.message.from.username;
-
         ctx.session.__scenes.state = {
             confirmationCode,
             email,
-            username
+            username,
+            from_id,
+            chat_id,
+            first_name,
+            last_name
         };
 
         await botHelper.sendEmailMessage({
             type: "CONFIRM_REGISTRATION",
-            recipientEmail: email,            
+            recipientEmail: email,
             parameters: {
                 confirmationCode,
-                username    
+                username: username || `${last_name},${first_name}`
             }
         });
 
-        ctx.reply("Cole aqui no chat o código de confirmação que foi enviado para o seu email para completar o cadastro.");
+        ctx.reply("Cole aqui no chat o código de confirmação que foi enviado para o seu email para completar o cadastro(Não esqueça de verificar a caixa de spam!)");
 
         return ctx.wizard.next();
     },
 
     async (ctx) => {
-        const confirmationCode = ctx.message.text;
+        const userInputCode = ctx.message.text;
 
-        if (confirmationCode !== ctx.session.__scenes.state.confirmationCode) {
+        const {
+            confirmationCode,
+            email,
+            username,
+            from_id,
+            chat_id,
+            first_name,
+            last_name,
+        } = ctx.session.__scenes.state;
+
+        if (confirmationCode !== userInputCode) {
             ctx.reply("Por favor, digite o mesmo código que foi enviado para o seu email.");
 
             return ctx.wizard.selectStep(ctx.wizard.cursor);
         }
 
         await botHelper.registerEmail({
-            first_name: ctx.update.message.from.first_name,
-            last_name: ctx.update.message.from.last_name,
-            email: ctx.session.__scenes.state.email,
-            username: ctx.session.__scenes.state.username
+            first_name,
+            last_name,
+            email,
+            username,
+            from_id,
+            chat_id
         });
 
         await botHelper.sendEmailMessage({
             type: "REGISTRATION_COMPLETED",
-            recipientEmail: ctx.session.__scenes.state.email,            
+            recipientEmail: email,
             parameters: {
-                username: ctx.session.__scenes.state.username    
+                username: username || `${last_name},${first_name}`
             }
         });
 

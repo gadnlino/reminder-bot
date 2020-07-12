@@ -6,26 +6,32 @@ module.exports = new WizardScene(
     "unregister_email",
     async ctx => {
 
-        const username = ctx.update.message.from.username;
+        const confirmationCode = utils.generateConfirmationCode();
+        const username = ctx.message.from.username ||
+            ctx.update.message.from.username;
+        const from_id = ctx.from.id;
+        const chat_id = ctx.chat.id;
+        const first_name = ctx.update.message.from.first_name;
+        const last_name = ctx.update.message.from.last_name;
 
-        const response = await botHelper.getUserEmail(username)
-
-        console.log(response);
+        const response = await botHelper.getUserEmail(username, from_id);
 
         if (!response || response.length === 0) {
-            ctx.reply("Você não tem emails cadastrados(Digite /email para cadastrar).")
+            ctx.reply("Você não tem emails cadastrados (Digite /email para cadastrar).")
 
             return ctx.scene.leave();
         }
 
         const email = response[0];
 
-        const confirmationCode = utils.generateConfirmationCode();
-
         ctx.session.__scenes.state = {
             confirmationCode,
             email,
-            username
+            username,
+            from_id,
+            chat_id,
+            first_name,
+            last_name
         };
 
         await botHelper.sendEmailMessage({
@@ -33,30 +39,40 @@ module.exports = new WizardScene(
             recipientEmail: email,
             parameters: {
                 confirmationCode,
-                username
+                username: username || `${last_name},${first_name}`
             }
         });
 
-        ctx.reply("Cole aqui no chat o código de confirmação que foi enviado para o seu email para descadastrá-lo.");
+        ctx.reply("Cole aqui no chat o código de confirmação que foi enviado para o seu email para completar o cadastro(Não esqueça de verificar a caixa de spam!)");
 
         return ctx.wizard.next();
     },
     async (ctx) => {
-        const confirmationCode = ctx.message.text;
+        const userInputCode = ctx.message.text;
+        const cursor = ctx.wizard.cursor;
 
-        if (confirmationCode !== ctx.session.__scenes.state.confirmationCode) {
+        const {
+            confirmationCode,
+            email,
+            username,
+            from_id,
+            first_name,
+            last_name
+        } = ctx.session.__scenes.state;
+
+        if (confirmationCode !== userInputCode) {
             ctx.reply("Por favor, digite o mesmo código que foi enviado para o seu email.");
 
-            return ctx.wizard.selectStep(ctx.wizard.cursor);
+            return ctx.wizard.selectStep(cursor);
         }
 
-        await botHelper.deregisterEmail(ctx.update.message.from.username);
+        await botHelper.deregisterEmail(username, from_id);
 
         await botHelper.sendEmailMessage({
             type: "UNREGISTRATION_COMPLETED",
-            recipientEmail: ctx.session.__scenes.state.email,
+            recipientEmail: email,
             parameters: {
-                username: ctx.session.__scenes.state.username
+                username: username || `${last_name},${first_name}`
             }
         });
 

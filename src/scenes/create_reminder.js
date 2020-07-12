@@ -4,7 +4,7 @@ const utils = require("../utils/utils.js");
 const botHelper = require("../helpers.js");
 
 const askForReminder = ctx => {
-    
+
     ctx.session.__scenes.state.lembrete = {
         username: ctx.update.message.from.username,
         from_id: ctx.from.id,
@@ -16,7 +16,7 @@ const askForReminder = ctx => {
 };
 
 const askForDate = async ctx => {
-    let {lembrete} = ctx.session.__scenes.state;
+    let { lembrete } = ctx.session.__scenes.state;
 
     const {
         text,
@@ -81,10 +81,10 @@ const askForDate = async ctx => {
 };
 
 const finishConversation = async ctx => {
-    let {lembrete} = ctx.session.__scenes.state;
+    let { lembrete } = ctx.session.__scenes.state;
 
     const date = utils.parseDate(ctx.message.text);
-    
+
     if (date === null) {
         ctx.reply("Não entendi, pode repetir a data? (Exemplo: Exemplo: 01-04-2020 12:30)");
 
@@ -94,7 +94,7 @@ const finishConversation = async ctx => {
 
     if (date < new Date()) {
         ctx.reply("Escolha uma data posterior ao momento atual.");
-        
+
         return ctx.wizard.selectStep(ctx.wizard.cursor);
     }
 
@@ -108,7 +108,7 @@ const finishConversation = async ctx => {
         console.log(`Lembrete criado: ${JSON.stringify(lembrete)}`);
 
         ctx.session.__scenes.state.lembrete = lembrete;
-        
+
         ctx.reply("Lembrete criado");
 
         return ctx.scene.leave();
