@@ -14,7 +14,8 @@ const {
     REMINDERS_QUEUE_URL,
     POLL_INTERVAL,
     PROJECT_REPO_URL,
-    SUBSCRIPTIONS_TABLE_NAME
+    SUBSCRIPTIONS_TABLE_NAME,
+    EMAIL_QUEUE_URL
 } = process.env;
 
 module.exports = {
@@ -30,6 +31,7 @@ module.exports = {
     remindersQueueUrl: REMINDERS_QUEUE_URL,
     pollInterval: POLL_INTERVAL,
     projectRepo: PROJECT_REPO_URL,
-    subscriptionsTableName: SUBSCRIPTIONS_TABLE_NAME
+    subscriptionsTableName: SUBSCRIPTIONS_TABLE_NAME,
+    emailQueueUrl: EMAIL_QUEUE_URL
 }
 

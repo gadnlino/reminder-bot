@@ -45,6 +45,30 @@ module.exports = {
     })) || null;
   },
 
+  sendEmailMessage: async (options) => {
+    const { type, parameters, recipientEmail } = options;
+
+    await awsSvc.sqs.sendMessage(config.emailQueueUrl, JSON.stringify({
+      type,
+      recipientEmail,
+      parameters
+    }));
+  },
+
+  getUserEmail: async (username) => {
+    const queryResp = await awsSvc.dynamodb.queryItems(
+      config.subscriptionsTableName,
+      "#id = :value",
+      { "#id": "username" },
+      { ":value": username }
+    );
+
+    if (queryResp.Items.length === 0)
+      return null
+
+    return queryResp.Items[0].email;
+  },
+
   registerEmail: async (options) => {
 
     const { first_name, last_name, email, username } = options;

@@ -14,7 +14,7 @@ module.exports = {
       bot.telegram.deleteWebhook();
       console.log("started polling for messages...");
       bot.startPolling();
-    } 
+    }
     else {
       bot.telegram.setWebhook(`${config.appUrl}bot${config.telegramToken}`);
       console.log("started webhook");

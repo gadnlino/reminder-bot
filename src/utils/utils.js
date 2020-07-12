@@ -80,5 +80,40 @@ if (matches === null) {
     const dateString = `${mes}/${dia}/${ano} ${hora}:${minuto}:00`;
 
     return new Date(dateString);
+  },
+
+  generateConfirmationCode: () => {
+    var numbers = "0123456789";
+
+    var chars = "acdefhiklmnoqrstuvwxyz";
+
+    var string_length = 3;
+    var randomstring = '';
+    var randomstring2 = '';
+
+    for (var x = 0; x < string_length; x++) {
+
+      var letterOrNumber = Math.floor(Math.random() * 2);
+
+      var rnum = Math.floor(Math.random() * chars.length);
+      randomstring += chars.substring(rnum, rnum + 1);
+
+
+    } for (var y = 0; y < string_length; y++) {
+
+      var letterOrNumber2 = Math.floor(Math.random() * 2);
+
+      var rnum2 = Math.floor(Math.random() * numbers.length);
+      randomstring2 += numbers.substring(rnum2, rnum2 + 1);
+    }
+
+    function shuffle(o) {
+      for (var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+      return o;
+    };
+
+    var code = shuffle((randomstring + randomstring2).split('')).join('');
+
+    return code;
   }
 }
